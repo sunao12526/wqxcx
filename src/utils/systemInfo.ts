@@ -35,4 +35,6 @@ console.log('systemInfo', systemInfo)
 // windowHeight: 753
 // windowTop: 0
 // windowWidth: 390
+export const tabBarHeight = 50 + (safeAreaInsets?.bottom || 0)
+
 export { safeAreaInsets, systemInfo }

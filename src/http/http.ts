@@ -25,7 +25,7 @@ export function http<T>(options: CustomRequestOptions) {
         const { code } = responseData
 
         // 检查是否是401错误（包括HTTP状态码401或业务码401）
-        const isTokenExpired = res.statusCode === 401 || code === 401
+        const isTokenExpired = res.statusCode === 401 || code === ResultEnum.Unauthorized || code === ResultEnum.UnauthorizedText
 
         if (isTokenExpired) {
           const tokenStore = useTokenStore()
@@ -95,7 +95,7 @@ export function http<T>(options: CustomRequestOptions) {
         // 处理其他成功状态（HTTP状态码200-299）
         if (res.statusCode >= 200 && res.statusCode < 300) {
           // 处理业务逻辑错误
-          if (code !== ResultEnum.Success0 && code !== ResultEnum.Success200) {
+          if (code !== ResultEnum.Success && code !== ResultEnum.Success0 && code !== ResultEnum.Success200) {
             uni.showToast({
               icon: 'none',
               title: responseData.msg || responseData.message || '请求错误',
@@ -175,6 +175,20 @@ export function httpPut<T>(url: string, data?: Record<string, any>, query?: Reco
 }
 
 /**
+ * PATCH 请求
+ */
+export function httpPatch<T>(url: string, data?: Record<string, any>, query?: Record<string, any>, header?: Record<string, any>, options?: Partial<CustomRequestOptions>) {
+  return http<T>({
+    url,
+    data,
+    query,
+    method: 'PATCH' as UniApp.RequestOptions['method'],
+    header,
+    ...options,
+  })
+}
+
+/**
  * DELETE 请求（无请求体，仅 query）
  */
 export function httpDelete<T>(url: string, query?: Record<string, any>, header?: Record<string, any>, options?: Partial<CustomRequestOptions>) {
@@ -191,10 +205,12 @@ export function httpDelete<T>(url: string, query?: Record<string, any>, header?:
 http.get = httpGet
 http.post = httpPost
 http.put = httpPut
+http.patch = httpPatch
 http.delete = httpDelete
 
 // 支持与 alovaJS 类似的API调用
 http.Get = httpGet
 http.Post = httpPost
 http.Put = httpPut
+http.Patch = httpPatch
 http.Delete = httpDelete

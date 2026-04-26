@@ -1,6 +1,6 @@
 /**
  * 将对象序列化为URL查询字符串，用于替代第三方的 qs 库，节省宝贵的体积
- * 支持基本类型值和数组，不支持嵌套对象
+ * 支持基本类型值、数组和一层对象
  * @param obj 要序列化的对象
  * @returns 序列化后的查询字符串
  */
@@ -19,6 +19,13 @@ export function stringifyQuery(obj: Record<string, any>): string {
         return value
           .filter(item => item !== undefined && item !== null)
           .map(item => `${encodedKey}=${encodeURIComponent(item)}`)
+          .join('&')
+      }
+
+      if (typeof value === 'object') {
+        return Object.entries(value)
+          .filter(([_, childValue]) => childValue !== undefined && childValue !== null)
+          .map(([childKey, childValue]) => `${encodedKey}[${encodeURIComponent(childKey)}]=${encodeURIComponent(String(childValue))}`)
           .join('&')
       }
 

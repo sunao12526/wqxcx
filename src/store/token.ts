@@ -56,7 +56,7 @@ export const useTokenStore = defineStore(
       const now = Date.now()
       if (isSingleTokenRes(val)) {
         // 单token模式
-        const expireTime = now + val.expiresIn * 1000
+        const expireTime = now + (val.expiresIn || 30 * 24 * 60 * 60) * 1000
         uni.setStorageSync('accessTokenExpireTime', expireTime)
       }
       else if (isDoubleTokenRes(val)) {
@@ -151,7 +151,7 @@ export const useTokenStore = defineStore(
         // 获取微信小程序登录的code
         const code = await getWxCode()
         console.log('微信登录-code: ', code)
-        const res = await _wxLogin(code)
+        const res = await _wxLogin({ code: code.code })
         console.log('微信登录-res: ', res)
         await _postLogin(res)
         uni.showToast({
@@ -243,7 +243,7 @@ export const useTokenStore = defineStore(
       }
 
       if (!isDoubleTokenMode) {
-        return isSingleTokenRes(tokenInfo.value) ? tokenInfo.value.token : ''
+        return isSingleTokenRes(tokenInfo.value) ? tokenInfo.value.accessToken || tokenInfo.value.token || '' : ''
       }
       else {
         return isDoubleTokenRes(tokenInfo.value) ? tokenInfo.value.accessToken : ''
@@ -261,7 +261,7 @@ export const useTokenStore = defineStore(
         return isDoubleTokenRes(tokenInfo.value) && !!tokenInfo.value.accessToken
       }
       else {
-        return isSingleTokenRes(tokenInfo.value) && !!tokenInfo.value.token
+        return isSingleTokenRes(tokenInfo.value) && !!(tokenInfo.value.accessToken || tokenInfo.value.token)
       }
     })
 

@@ -7,7 +7,7 @@ import {
 
 // 初始化状态
 const userInfoState: IUserInfoRes = {
-  userId: -1,
+  userId: '',
   username: '',
   nickname: '',
   avatar: '/static/images/default-avatar.png',
@@ -23,7 +23,7 @@ export const useUserStore = defineStore(
       console.log('设置用户信息', val)
       // 若头像为空 则使用默认头像
       if (!val.avatar) {
-        val.avatar = userInfoState.avatar
+        val.avatar = val.avatarUrl || userInfoState.avatar
       }
       userInfo.value = val
     }

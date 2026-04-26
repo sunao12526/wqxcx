@@ -37,21 +37,29 @@ export function refreshToken(refreshToken: string) {
  * 获取用户信息
  */
 export function getUserInfo() {
-  return http.get<IUserInfoRes>('/user/info')
+  return http.get<{ data: IUserInfoRes }>('/auth/me').then(res => ({
+    ...res.data,
+    userId: res.data.userId || res.data.sub || '',
+    nickname: res.data.nickname || res.data.username || '微信用户',
+    avatar: res.data.avatar || res.data.avatarUrl || '/static/images/default-avatar.png',
+  }))
 }
 
 /**
  * 退出登录
  */
 export function logout() {
-  return http.get<void>('/auth/logout')
+  return Promise.resolve()
 }
 
 /**
  * 修改用户信息
  */
 export function updateInfo(data: IUpdateInfo) {
-  return http.post('/user/updateInfo', data)
+  return http.patch<{ data: IUserInfoRes }>('/auth/me/profile', {
+    nickname: data.name,
+    avatarUrl: null,
+  })
 }
 
 /**
@@ -81,5 +89,5 @@ export function getWxCode() {
  * @returns Promise 包含登录结果
  */
 export function wxLogin(data: { code: string }) {
-  return http.post<IAuthLoginRes>('/auth/wxLogin', data)
+  return http.post<IAuthLoginRes>('/auth/miniprogram/login', data)
 }

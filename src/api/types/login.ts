@@ -3,8 +3,9 @@ export type AuthMode = 'single' | 'double'
 
 // 单Token响应类型
 export interface ISingleTokenRes {
-  token: string
-  expiresIn: number // 有效期(秒)
+  token?: string
+  accessToken?: string
+  expiresIn?: number // 有效期(秒)
 }
 
 // 双Token响应类型
@@ -26,10 +27,15 @@ export type IAuthLoginRes = ISingleTokenRes | IDoubleTokenRes
 export type UserRole = string
 
 export interface IUserInfoRes {
-  userId: number
+  userId: number | string
+  sub?: string
   username: string
   nickname: string
   avatar?: string
+  avatarUrl?: string | null
+  phoneNumber?: string | null
+  permissions?: string[]
+  authProvider?: string
   /** 同时支持单角色和多角色，你自行选择一种就行 */
   role?: UserRole
   roles?: UserRole[]
@@ -89,7 +95,7 @@ export interface IUpdatePassword {
  * @returns 是否为单Token响应
  */
 export function isSingleTokenRes(tokenRes: IAuthLoginRes): tokenRes is ISingleTokenRes {
-  return 'token' in tokenRes && !('refreshToken' in tokenRes)
+  return ('token' in tokenRes || 'accessToken' in tokenRes) && !('refreshToken' in tokenRes)
 }
 
 /**
