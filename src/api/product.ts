@@ -1,4 +1,4 @@
-import type { PageList, ProductAttribute, ProductCategory, ProductItem } from './types/app'
+import type { PageList, ProductAttribute, ProductCategory, ProductFavoriteStatus, ProductItem } from './types/app'
 import { http } from '@/http/http'
 
 export interface ProductQuery {
@@ -32,4 +32,26 @@ export function getProductDetail(id: string) {
 
 export function getProductAttributes(type: ProductAttribute['type']) {
   return http.get<PageList<ProductAttribute>>('/product-attributes', { type })
+}
+
+export function getFavoriteProducts(query: Omit<ProductQuery, 'categoryId'> = {}) {
+  return http.get<PageList<ProductItem>>('/product-favorites/my', {
+    _start: query._start ?? 0,
+    _end: query._end ?? 20,
+    _sort: query._sort ?? 'createdAt',
+    _order: query._order ?? 'DESC',
+  })
+}
+
+export function favoriteProduct(productId: string) {
+  return http.post<{ data: ProductFavoriteStatus }>(`/product-favorites/${productId}`).then(res => res.data)
+}
+
+export function unfavoriteProduct(productId: string) {
+  return http.delete<{ data: ProductFavoriteStatus }>(`/product-favorites/${productId}`).then(res => res.data)
+}
+
+export async function getProductFavoriteStatus(productId: string) {
+  const response = await getFavoriteProducts({ _start: 0, _end: 100 })
+  return response.data.some(item => item.id === productId)
 }

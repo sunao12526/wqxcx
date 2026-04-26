@@ -63,15 +63,6 @@ onShow(() => {
   <scroll-view scroll-y class="page">
     <wd-navbar title="品人家居" custom-class="app-navbar" safe-area-inset-top placeholder fixed :bordered="false" />
 
-    <view class="header">
-      <view class="header__title">
-        品人家居
-      </view>
-      <view class="header__subtitle">
-        精选家居好物，一键提交采购需求
-      </view>
-    </view>
-
     <view v-if="loading" class="state">
       加载中...
     </view>
@@ -135,23 +126,6 @@ onShow(() => {
 .page {
   min-height: 100vh;
   background: #f7f3ee;
-}
-
-.header {
-  padding: 32rpx 32rpx 28rpx;
-  background: #202124;
-  color: #fff;
-}
-
-.header__title {
-  font-size: 46rpx;
-  font-weight: 700;
-}
-
-.header__subtitle {
-  margin-top: 12rpx;
-  color: #f2d6b7;
-  font-size: 26rpx;
 }
 
 .banner {

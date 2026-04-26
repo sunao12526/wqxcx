@@ -79,6 +79,11 @@ export interface ProductItem extends ProductCard {
   updatedAt: string
 }
 
+export interface ProductFavoriteStatus {
+  productId: string
+  favorited: boolean
+}
+
 export type OrderStatus = 'PENDING' | 'FOLLOWED_UP' | 'CLOSED'
 
 export interface OrderSummary {

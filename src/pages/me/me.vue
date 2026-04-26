@@ -124,6 +124,11 @@ onShow(() => {
         </view>
 
         <view class="section menu">
+          <view class="menu-item" @click="openPage('/pages/user/favorite')">
+            <image class="menu-item__image" src="/static/images/icon-collection@2x.png" mode="aspectFit" />
+            <text>我的收藏</text>
+            <wd-icon name="arrow-right" size="18px" color="#8f837a" />
+          </view>
           <view class="menu-item" @click="openPage('/pages/user/orders')">
             <wd-icon name="list" size="20px" color="#202124" />
             <text>订单记录</text>
@@ -299,6 +304,11 @@ onShow(() => {
 .menu-item text {
   flex: 1;
   margin-left: 18rpx;
+}
+
+.menu-item__image {
+  width: 40rpx;
+  height: 40rpx;
 }
 
 .loading {

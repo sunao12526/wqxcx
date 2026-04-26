@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { ProductColorImage, ProductItem } from '@/api/types/app'
 import { createOrder } from '@/api/order'
-import { getProductDetail } from '@/api/product'
+import { favoriteProduct, getProductDetail, getProductFavoriteStatus, unfavoriteProduct } from '@/api/product'
 
 definePage({
   style: {
@@ -13,7 +13,9 @@ definePage({
 const productId = ref('')
 const loading = ref(true)
 const submitting = ref(false)
+const favoriteSubmitting = ref(false)
 const product = ref<ProductItem>()
+const isFavorite = ref(false)
 const activeColorId = ref('')
 const activeSizeId = ref('')
 const quantity = ref(1)
@@ -40,6 +42,24 @@ function changeQty(delta: number) {
 
 function goBack() {
   uni.navigateBack()
+}
+
+async function toggleFavorite() {
+  if (!productId.value || favoriteSubmitting.value) {
+    return
+  }
+
+  favoriteSubmitting.value = true
+  try {
+    const nextStatus = isFavorite.value
+      ? await unfavoriteProduct(productId.value)
+      : await favoriteProduct(productId.value)
+    isFavorite.value = nextStatus.favorited
+    uni.showToast({ title: nextStatus.favorited ? '已收藏商品' : '已取消收藏', icon: 'none' })
+  }
+  finally {
+    favoriteSubmitting.value = false
+  }
 }
 
 async function submitOrder() {
@@ -84,7 +104,12 @@ onLoad(async (options) => {
   }
 
   try {
-    product.value = await getProductDetail(productId.value)
+    const [productRes, favoriteStatus] = await Promise.all([
+      getProductDetail(productId.value),
+      getProductFavoriteStatus(productId.value).catch(() => false),
+    ])
+    product.value = productRes
+    isFavorite.value = favoriteStatus
     activeColorId.value = product.value.colorImages?.[0]?.colorId || ''
     activeSizeId.value = product.value.sizeIds?.[0] || ''
     quantity.value = minQty.value
@@ -97,7 +122,25 @@ onLoad(async (options) => {
 
 <template>
   <scroll-view scroll-y class="page">
-    <wd-navbar title="商品详情" left-arrow safe-area-inset-top placeholder fixed :bordered="false" @click-left="goBack" />
+    <wd-navbar
+      custom-class="detail-navbar" left-arrow safe-area-inset-top placeholder fixed
+      :bordered="false" @click-left="goBack"
+    >
+      <template #right>
+        <view class="navbar-actions">
+          <view class="navbar-icon" @click="toggleFavorite">
+            <image
+              class="navbar-icon__image"
+              :src="isFavorite ? '/static/images/icon-collection-sel@2x.png' : '/static/images/icon-collection-nor@2x.png'"
+              mode="aspectFit"
+            />
+          </view>
+          <button class="share-btn" open-type="share">
+            <image class="navbar-icon__image" src="/static/images/icon-share-black@2x.png" mode="aspectFit" />
+          </button>
+        </view>
+      </template>
+    </wd-navbar>
 
     <view v-if="loading" class="state">
       加载中...
@@ -121,6 +164,13 @@ onLoad(async (options) => {
           <text v-if="product.material">{{ product.material.name }}</text>
           <text v-if="product.style">{{ product.style.name }}</text>
         </view>
+      </view>
+
+      <view v-if="product.detail" class="panel detail-panel">
+        <view class="block-title">
+          商品详情
+        </view>
+        <fg-rich-content :html="product.detail" />
       </view>
 
       <view class="panel">
@@ -200,11 +250,53 @@ onLoad(async (options) => {
   background: #eee;
 }
 
+.page :deep(.detail-navbar) {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 30rpx;
+  margin-right: 200rpx;
+}
+
+.navbar-icon,
+.share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52rpx;
+  height: 52rpx;
+}
+
+.share-btn {
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  background: transparent;
+  border: 0;
+}
+
+.share-btn::after {
+  border: 0;
+}
+
+.navbar-icon__image {
+  width: 48rpx;
+  height: 48rpx;
+}
+
 .panel {
   margin: 20rpx 24rpx 0;
   padding: 28rpx;
   background: #fff;
   border-radius: 8rpx;
+}
+
+.detail-panel {
+  padding-bottom: 34rpx;
 }
 
 .title {
