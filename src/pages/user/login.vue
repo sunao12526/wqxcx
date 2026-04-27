@@ -51,33 +51,44 @@ async function handleQuickLogin() {
     isSubmitting.value = false
   }
 }
+
+function openProtocol(type: 1 | 2) {
+  uni.navigateTo({ url: `/pages/user/protocol?type=${type}` })
+}
 </script>
 
 <template>
   <view class="login-page">
-    <wd-navbar title="登录" custom-class="plain-navbar" safe-area-inset-top placeholder fixed :bordered="false" />
+    <wd-navbar custom-class="plain-navbar" safe-area-inset-top placeholder fixed :bordered="false" />
 
-    <view class="brand">
-      <view class="brand__mark">
-        WQ
+    <view class="login-container">
+      <view class="brand">
+        <image class="logo-image" src="/static/images/icon-logo.png" mode="aspectFit" />
+        <view class="brand__name">
+          品人家居
+        </view>
+        <view class="brand__desc">
+          微信快捷登录后查看商品与订单
+        </view>
       </view>
-      <view class="brand__name">
-        品人家居
-      </view>
-      <view class="brand__desc">
-        微信快捷登录后查看商品与订单
-      </view>
-    </view>
 
-    <view class="action-area">
-      <wd-button block custom-class="login-btn" :loading="isSubmitting" @click="handleQuickLogin">
-        微信快捷登录
-      </wd-button>
+      <view class="action-area">
+        <wd-button block custom-class="login-btn" :loading="isSubmitting" @click="handleQuickLogin">
+          微信快捷登录
+        </wd-button>
 
-      <view class="agreement-row" @click="isAgreed = !isAgreed">
-        <wd-checkbox :model-value="isAgreed" shape="square" checked-color="#e54d2e" />
-        <view class="agreement-text">
-          我已阅读并同意用户协议和隐私政策
+        <view class="agreement-row" @click="isAgreed = !isAgreed">
+          <image
+            class="check-icon"
+            :src="isAgreed ? '/static/images/icon-select-sel@2x.png' : '/static/images/icon-select-nor@2x.png'"
+            mode="aspectFit"
+          />
+          <view class="agreement-text">
+            我已阅读并同意
+            <text class="agreement-link" @click.stop="openProtocol(1)">用户协议</text>
+            和
+            <text class="agreement-link" @click.stop="openProtocol(2)">隐私政策</text>
+          </view>
         </view>
       </view>
     </view>
@@ -86,9 +97,19 @@ async function handleQuickLogin() {
 
 <style lang="scss" scoped>
 .login-page {
-  min-height: 100vh;
-  padding: 72rpx 64rpx 64rpx;
-  background: #fffaf7;
+  box-sizing: border-box;
+  height: 100vh;
+  overflow: hidden;
+  background: #fff;
+}
+
+.login-container {
+  box-sizing: border-box;
+  height: calc(100vh - 88rpx);
+  padding: 110rpx 75rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .brand {
@@ -97,21 +118,13 @@ async function handleQuickLogin() {
   align-items: center;
 }
 
-.brand__mark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 168rpx;
-  height: 168rpx;
-  border-radius: 50%;
-  background: #202124;
-  color: #ffdfb0;
-  font-size: 44rpx;
-  font-weight: 700;
+.logo-image {
+  width: 240rpx;
+  height: 240rpx;
 }
 
 .brand__name {
-  margin-top: 36rpx;
+  margin-top: 32rpx;
   color: #202124;
   font-size: 44rpx;
   font-weight: 700;
@@ -119,21 +132,23 @@ async function handleQuickLogin() {
 
 .brand__desc {
   margin-top: 16rpx;
-  color: #7b6f68;
+  color: #8b8277;
   font-size: 26rpx;
 }
 
 .action-area {
-  margin-top: 240rpx;
+  margin-top: 220rpx;
+  width: 100%;
 }
 
 :deep(.login-btn) {
-  height: 88rpx !important;
+  width: 100% !important;
+  height: 80rpx !important;
   border: none !important;
-  border-radius: 44rpx !important;
+  border-radius: 40rpx !important;
   background: #e54d2e !important;
   font-size: 32rpx !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
 }
 
 .agreement-row {
@@ -141,11 +156,21 @@ async function handleQuickLogin() {
   align-items: center;
   justify-content: center;
   gap: 12rpx;
-  margin-top: 36rpx;
+  margin-top: 40rpx;
+}
+
+.check-icon {
+  width: 24rpx;
+  height: 24rpx;
+  flex-shrink: 0;
 }
 
 .agreement-text {
-  color: #6b625d;
+  color: #252525;
   font-size: 24rpx;
+}
+
+.agreement-link {
+  color: #e54d2e;
 }
 </style>

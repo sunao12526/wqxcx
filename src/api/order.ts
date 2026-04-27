@@ -1,4 +1,4 @@
-import type { CreateOrderPayload, OrderDetail, OrderSummary, PageList } from './types/app'
+import type { CreateOrderPayload, OrderDetail, OrderStatus, OrderSummary, PageList } from './types/app'
 import { http } from '@/http/http'
 
 export interface OrderQuery {
@@ -6,6 +6,7 @@ export interface OrderQuery {
   _end?: number
   _sort?: string
   _order?: 'ASC' | 'DESC'
+  status?: OrderStatus
 }
 
 export function createOrder(data: CreateOrderPayload) {
@@ -13,11 +14,14 @@ export function createOrder(data: CreateOrderPayload) {
 }
 
 export function getMyOrders(query: OrderQuery = {}) {
+  const filters = query.status ? { status: query.status } : undefined
+
   return http.get<PageList<OrderSummary>>('/orders/my', {
     _start: query._start ?? 0,
     _end: query._end ?? 20,
     _sort: query._sort ?? 'createdAt',
     _order: query._order ?? 'DESC',
+    ...(filters ? { filters } : {}),
   })
 }
 

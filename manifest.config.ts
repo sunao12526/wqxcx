@@ -123,6 +123,8 @@ export default defineManifestConfig({
       urlCheck: false,
       // 是否启用 ES6 转 ES5
       es6: true,
+      ignoreDevUnusedFiles: false,
+      ignoreUploadUnusedFiles: false,
       minified: true,
     },
     optimization: {

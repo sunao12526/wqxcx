@@ -2,6 +2,7 @@
 import type { ProductColorImage, ProductItem } from '@/api/types/app'
 import { createOrder } from '@/api/order'
 import { favoriteProduct, getProductDetail, getProductFavoriteStatus, unfavoriteProduct } from '@/api/product'
+import { useTokenStore } from '@/store'
 
 definePage({
   style: {
@@ -14,6 +15,7 @@ const productId = ref('')
 const loading = ref(true)
 const submitting = ref(false)
 const favoriteSubmitting = ref(false)
+const showContactPopup = ref(false)
 const product = ref<ProductItem>()
 const isFavorite = ref(false)
 const activeColorId = ref('')
@@ -23,6 +25,7 @@ const contactName = ref('')
 const contactPhone = ref('')
 const wechatNo = ref('')
 const remark = ref('')
+const tokenStore = useTokenStore()
 
 const currentImage = computed(() => {
   const images = product.value?.colorImages || []
@@ -44,8 +47,24 @@ function goBack() {
   uni.navigateBack()
 }
 
+function requireLogin() {
+  if (tokenStore.updateNowTime().hasLogin) {
+    return true
+  }
+
+  uni.showToast({ title: '请先登录', icon: 'none' })
+  setTimeout(() => {
+    const redirect = encodeURIComponent(`/pages/goods/detail?id=${productId.value}`)
+    uni.navigateTo({ url: `/pages/user/login?redirect=${redirect}` })
+  }, 600)
+  return false
+}
+
 async function toggleFavorite() {
   if (!productId.value || favoriteSubmitting.value) {
+    return
+  }
+  if (!requireLogin()) {
     return
   }
 
@@ -62,13 +81,33 @@ async function toggleFavorite() {
   }
 }
 
-async function submitOrder() {
+function openContactPopup() {
+  if (!requireLogin()) {
+    return
+  }
   if (!product.value || !activeColorId.value || !activeSizeId.value) {
     uni.showToast({ title: '请选择颜色和尺码', icon: 'none' })
     return
   }
+
+  showContactPopup.value = true
+}
+
+function closeContactPopup() {
+  if (submitting.value) {
+    return
+  }
+  showContactPopup.value = false
+}
+
+async function submitOrder() {
   if (!contactName.value || !contactPhone.value) {
     uni.showToast({ title: '请填写联系人和手机号', icon: 'none' })
+    return
+  }
+  if (!product.value || !activeColorId.value || !activeSizeId.value) {
+    uni.showToast({ title: '请选择颜色和尺码', icon: 'none' })
+    showContactPopup.value = false
     return
   }
 
@@ -86,6 +125,7 @@ async function submitOrder() {
         quantity: quantity.value,
       }],
     })
+    showContactPopup.value = false
     uni.showToast({ title: '提交成功', icon: 'success' })
     setTimeout(() => {
       uni.redirectTo({ url: `/pages/user/order-detail?id=${order.id}` })
@@ -104,10 +144,10 @@ onLoad(async (options) => {
   }
 
   try {
-    const [productRes, favoriteStatus] = await Promise.all([
-      getProductDetail(productId.value),
-      getProductFavoriteStatus(productId.value).catch(() => false),
-    ])
+    const productRes = await getProductDetail(productId.value)
+    const favoriteStatus = tokenStore.updateNowTime().hasLogin
+      ? await getProductFavoriteStatus(productId.value).catch(() => false)
+      : false
     product.value = productRes
     isFavorite.value = favoriteStatus
     activeColorId.value = product.value.colorImages?.[0]?.colorId || ''
@@ -122,18 +162,14 @@ onLoad(async (options) => {
 
 <template>
   <scroll-view scroll-y class="page">
-    <wd-navbar
-      custom-class="detail-navbar" left-arrow safe-area-inset-top placeholder fixed
-      :bordered="false" @click-left="goBack"
-    >
+    <wd-navbar custom-class="detail-navbar" left-arrow safe-area-inset-top placeholder fixed :bordered="false"
+      @click-left="goBack">
       <template #right>
         <view class="navbar-actions">
           <view class="navbar-icon" @click="toggleFavorite">
-            <image
-              class="navbar-icon__image"
+            <image class="navbar-icon__image"
               :src="isFavorite ? '/static/images/icon-collection-sel@2x.png' : '/static/images/icon-collection-nor@2x.png'"
-              mode="aspectFit"
-            />
+              mode="aspectFit" />
           </view>
           <button class="share-btn" open-type="share">
             <image class="navbar-icon__image" src="/static/images/icon-share-black@2x.png" mode="aspectFit" />
@@ -166,22 +202,13 @@ onLoad(async (options) => {
         </view>
       </view>
 
-      <view v-if="product.detail" class="panel detail-panel">
-        <view class="block-title">
-          商品详情
-        </view>
-        <fg-rich-content :html="product.detail" />
-      </view>
-
       <view class="panel">
         <view class="block-title">
           颜色
         </view>
         <view class="options">
-          <view
-            v-for="item in product.colorImages" :key="item.colorId" class="option"
-            :class="{ 'option--active': activeColorId === item.colorId }" @click="selectColor(item)"
-          >
+          <view v-for="item in product.colorImages" :key="item.colorId" class="option"
+            :class="{ 'option--active': activeColorId === item.colorId }" @click="selectColor(item)">
             {{ item.color?.name || '颜色' }}
           </view>
         </view>
@@ -190,10 +217,8 @@ onLoad(async (options) => {
           尺码
         </view>
         <view class="options">
-          <view
-            v-for="item in product.sizes" :key="item.id" class="option"
-            :class="{ 'option--active': activeSizeId === item.id }" @click="activeSizeId = item.id"
-          >
+          <view v-for="item in product.sizes" :key="item.id" class="option"
+            :class="{ 'option--active': activeSizeId === item.id }" @click="activeSizeId = item.id">
             {{ item.name }}
           </view>
         </view>
@@ -214,14 +239,11 @@ onLoad(async (options) => {
         </view>
       </view>
 
-      <view class="panel">
+      <view v-if="product.detail" class="panel detail-panel">
         <view class="block-title">
-          联系信息
+          商品详情
         </view>
-        <input v-model="contactName" class="input" placeholder="联系人">
-        <input v-model="contactPhone" class="input" type="number" placeholder="手机号">
-        <input v-model="wechatNo" class="input" placeholder="微信号（选填）">
-        <textarea v-model="remark" class="textarea" placeholder="备注（选填）" />
+        <fg-rich-content :html="product.detail" />
       </view>
 
       <view class="bottom-bar">
@@ -229,18 +251,70 @@ onLoad(async (options) => {
           <text class="bottom-bar__label">合计</text>
           <text class="bottom-bar__price">¥{{ totalAmount }}</text>
         </view>
-        <wd-button custom-class="submit-btn" :loading="submitting" @click="submitOrder">
+        <wd-button custom-class="submit-btn" :loading="submitting" @click="openContactPopup">
           提交订单
         </wd-button>
       </view>
     </template>
   </scroll-view>
+
+  <wd-popup v-model="showContactPopup" position="bottom" custom-class="contact-popup-shell"
+    custom-style="background-color: transparent;" @close="closeContactPopup">
+    <view class="contact-popup" @touchmove.stop>
+      <view class="contact-popup__head">
+        <view class="contact-popup__title">
+          联系信息
+        </view>
+        <view class="contact-popup__close" @click="closeContactPopup">
+          <wd-icon name="close" size="20px" color="#7b6f68" />
+        </view>
+      </view>
+
+      <view class="contact-popup__summary">
+        <text>{{ product?.name }}</text>
+        <text class="contact-popup__amount">¥{{ totalAmount }}</text>
+      </view>
+
+      <view class="contact-form">
+        <view class="field">
+          <view class="field__label">
+            联系人<text class="required">*</text>
+          </view>
+          <input v-model="contactName" class="input" placeholder="请填写联系人">
+        </view>
+        <view class="field">
+          <view class="field__label">
+            手机号<text class="required">*</text>
+          </view>
+          <input v-model="contactPhone" class="input" type="number" placeholder="请填写手机号">
+        </view>
+        <view class="field">
+          <view class="field__label">
+            微信号
+          </view>
+          <input v-model="wechatNo" class="input" placeholder="选填，便于客服跟进">
+        </view>
+        <view class="field">
+          <view class="field__label">
+            备注
+          </view>
+          <textarea v-model="remark" class="textarea" placeholder="选填，可填写颜色、配送或其他需求" />
+        </view>
+      </view>
+
+      <view class="contact-popup__actions">
+        <wd-button block custom-class="confirm-btn" :loading="submitting" @click="submitOrder">
+          确认提交
+        </wd-button>
+      </view>
+    </view>
+  </wd-popup>
 </template>
 
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
-  padding-bottom: 140rpx;
+  padding-bottom: 200rpx;
   background: #f7f3ee;
 }
 
@@ -416,6 +490,96 @@ onLoad(async (options) => {
 .textarea {
   height: 150rpx;
   padding-top: 20rpx;
+}
+
+:deep(.contact-popup-shell) {
+  width: 100%;
+}
+
+.contact-popup {
+  box-sizing: border-box;
+  padding: 32rpx 28rpx calc(28rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+}
+
+.contact-popup__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.contact-popup__title {
+  color: #202124;
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.contact-popup__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60rpx;
+  height: 60rpx;
+}
+
+.contact-popup__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-top: 22rpx;
+  padding: 18rpx 22rpx;
+  background: #f7f3ee;
+  border-radius: 8rpx;
+  color: #5f5752;
+  font-size: 24rpx;
+}
+
+.contact-popup__summary text:first-child {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-popup__amount {
+  color: #e54d2e;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.contact-form {
+  margin-top: 22rpx;
+}
+
+.field {
+  margin-top: 18rpx;
+}
+
+.field__label {
+  color: #202124;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.required {
+  margin-left: 4rpx;
+  color: #e54d2e;
+}
+
+.contact-popup__actions {
+  margin-top: 28rpx;
+}
+
+:deep(.confirm-btn) {
+  height: 80rpx !important;
+  border: none !important;
+  border-radius: 40rpx !important;
+  background: #e54d2e !important;
+  font-size: 30rpx !important;
+  font-weight: 600 !important;
 }
 
 .bottom-bar {

@@ -9,7 +9,6 @@ import UniLayouts from '@uni-helper/vite-plugin-uni-layouts'
 import UniManifest from '@uni-helper/vite-plugin-uni-manifest'
 // @see https://uni-helper.js.org/vite-plugin-uni-pages
 import UniPages from '@uni-helper/vite-plugin-uni-pages'
-import { WotResolver } from './wot-ui-resolver'
 // @see https://github.com/uni-helper/vite-plugin-uni-platform
 // 需要与 @uni-helper/vite-plugin-uni-pages 插件一起使用
 import UniPlatform from '@uni-helper/vite-plugin-uni-platform'
@@ -31,6 +30,7 @@ import openDevTools from './scripts/open-dev-tools'
 import vitePluginEruda from './scripts/vite-plugin-eruda'
 import { createCopyNativeResourcesPlugin } from './vite-plugins/copy-native-resources'
 import syncManifestPlugin from './vite-plugins/sync-manifest-plugins'
+import { WotResolver } from './wot-ui-resolver'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
@@ -89,7 +89,13 @@ export default defineConfig(({ command, mode }) => {
       }),
       // UniOptimization 插件需要 page.json 文件，故应在 UniPages 插件之后执行
       UniOptimization({
-        enable: isMpWeixin,
+        enable: isMpWeixin
+          ? {
+              'optimization': true,
+              'async-import': true,
+              'async-component': false,
+            }
+          : false,
         dts: {
           base: 'src/types',
         },
