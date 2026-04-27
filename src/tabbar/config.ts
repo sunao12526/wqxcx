@@ -63,6 +63,12 @@ export const customTabbarList: CustomTabBarItem[] = [
   //   isBulge: true,
   // },
   {
+    text: '全部商品',
+    pagePath: 'pages/mall/mall',
+    iconType: 'unocss',
+    icon: 'i-carbon-catalog',
+  },
+  {
     pagePath: 'pages/about/about',
     text: '关于',
     // 1）在fg-tabbar.vue页面上引入一下并注释掉（见tabbar/index.vue代码第2行）

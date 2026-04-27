@@ -66,9 +66,10 @@ onShow(() => {
 
 <template>
   <scroll-view scroll-y class="page" :style="pageStyle">
-    <wd-navbar title="我的" custom-class="app-navbar" safe-area-inset-top placeholder fixed :bordered="false" />
+    <!-- <wd-navbar title="我的" custom-class="app-navbar" safe-area-inset-top placeholder fixed :bordered="false" /> -->
 
     <view class="hero">
+      <image class="hero__bg" src="/static/images/imj-my-bg@2x.png" mode="aspectFill" />
       <view class="hero__brand">
         品人家居
       </view>
@@ -129,16 +130,6 @@ onShow(() => {
             <text>我的收藏</text>
             <wd-icon name="arrow-right" size="18px" color="#8f837a" />
           </view>
-          <view class="menu-item" @click="openPage('/pages/user/orders')">
-            <wd-icon name="list" size="20px" color="#202124" />
-            <text>订单记录</text>
-            <wd-icon name="arrow-right" size="18px" color="#8f837a" />
-          </view>
-          <view class="menu-item" @click="openPage('/pages/goods/list')">
-            <wd-icon name="goods" size="20px" color="#202124" />
-            <text>继续选购</text>
-            <wd-icon name="arrow-right" size="18px" color="#8f837a" />
-          </view>
           <view class="menu-item" @click="logout">
             <wd-icon name="logout" size="20px" color="#202124" />
             <text>退出登录</text>
@@ -160,11 +151,26 @@ onShow(() => {
   background: #f7f3ee;
 }
 
+// .hero {
+//   height: 360rpx;
+//   padding: 32rpx 32rpx 0;
+//   background: #202124;
+//   color: #ffdfb0;
+// }
 .hero {
-  height: 360rpx;
-  padding: 32rpx 32rpx 0;
-  background: #202124;
-  color: #ffdfb0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 500rpx;
+  background: transparent;
+}
+.hero__bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 500rpx;
 }
 
 :deep(.app-navbar .wd-navbar__wrapper) {
@@ -182,6 +188,8 @@ onShow(() => {
 }
 
 .content {
+  position: relative;
+  z-index: 1;
   margin-top: -120rpx;
   padding: 0 24rpx 40rpx;
 }
