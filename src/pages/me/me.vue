@@ -40,7 +40,9 @@ async function loadMe() {
 
   loading.value = true
   try {
-    await userStore.fetchUserInfo()
+    if (!userInfo.value.userId && !userInfo.value.sub && !userInfo.value.id) {
+      await userStore.fetchUserInfo()
+    }
     const orderRes = await getMyOrders({ _start: 0, _end: 100 })
     orders.value = orderRes.data
   }
@@ -92,7 +94,7 @@ onShow(() => {
       </view>
 
       <template v-else>
-        <view class="profile-card">
+        <view class="profile-card" @click="openPage('/pages/user/profile')">
           <image class="profile-card__avatar" :src="userInfo.avatar || '/static/images/default-avatar.png'" mode="aspectFill" />
           <view class="profile-card__main">
             <view class="profile-card__name">
@@ -125,6 +127,11 @@ onShow(() => {
         </view>
 
         <view class="section menu">
+          <!-- <view class="menu-item" @click="openPage('/pages/user/profile')">
+            <wd-icon name="user" size="20px" color="#202124" />
+            <text>个人信息</text>
+            <wd-icon name="arrow-right" size="18px" color="#8f837a" />
+          </view> -->
           <view class="menu-item" @click="openPage('/pages/user/favorite')">
             <image class="menu-item__image" src="/static/images/icon-collection@2x.png" mode="aspectFit" />
             <text>我的收藏</text>

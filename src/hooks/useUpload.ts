@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { getEnvBaseUrl } from '@/utils/index'
 
-const VITE_UPLOAD_BASEURL = `${getEnvBaseUrl()}/upload`
+const VITE_UPLOAD_BASEURL = `${getEnvBaseUrl()}/files/upload`
 
 type TfileType = 'image' | 'file'
 type TImage = 'png' | 'jpg' | 'jpeg' | 'webp' | '*'
@@ -55,20 +55,15 @@ export default function useUpload<T extends TfileType>(options: TOptions<T> = {}
       tempFilePath,
       formData,
       onSuccess: (res) => {
-        // 修改这里的解析逻辑，适应不同平台的返回格式
-        let parsedData = res
+        let parsedData: any = res
         try {
-          // 尝试解析为JSON
-          const jsonData = JSON.parse(res)
-          // 检查是否包含data字段
-          parsedData = jsonData.data || jsonData
+          parsedData = typeof res === 'string' ? JSON.parse(res) : res
         }
         catch (e) {
-          // 如果解析失败，使用原始数据
           console.log('Response is not JSON, using raw data:', res)
         }
+        console.log('Upload parsed response:', parsedData)
         data.value = parsedData
-        // console.log('上传成功', res)
         success?.(parsedData)
       },
       onError: (err) => {
@@ -154,9 +149,13 @@ async function uploadFile({
     name: 'file',
     formData,
     success: (uploadFileRes) => {
+      console.log('Upload raw response:', uploadFileRes)
       try {
-        const data = uploadFileRes.data
-        onSuccess(data)
+        if (uploadFileRes.statusCode < 200 || uploadFileRes.statusCode >= 300) {
+          onError(new Error(`上传失败：${uploadFileRes.statusCode}`))
+          return
+        }
+        onSuccess(uploadFileRes.data)
       }
       catch (err) {
         onError(err)

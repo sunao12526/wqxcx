@@ -1,6 +1,16 @@
 import type { IAuthLoginRes, ICaptcha, IDoubleTokenRes, IUpdateInfo, IUpdatePassword, IUserInfoRes } from './types/login'
 import { http } from '@/http/http'
 
+function normalizeUserInfo(data: IUserInfoRes): IUserInfoRes {
+  const userInfo = (data as any).user || (data as any).data || data
+  return {
+    ...userInfo,
+    userId: userInfo.userId || userInfo.id || userInfo.sub || '',
+    nickname: userInfo.nickname || userInfo.username || '微信用户',
+    avatar: userInfo.avatar || userInfo.avatarUrl || '/static/images/default-avatar.png',
+  }
+}
+
 /**
  * 登录表单
  */
@@ -37,12 +47,7 @@ export function refreshToken(refreshToken: string) {
  * 获取用户信息
  */
 export function getUserInfo() {
-  return http.get<{ data: IUserInfoRes }>('/auth/me').then(res => ({
-    ...res.data,
-    userId: res.data.userId || res.data.sub || '',
-    nickname: res.data.nickname || res.data.username || '微信用户',
-    avatar: res.data.avatar || res.data.avatarUrl || '/static/images/default-avatar.png',
-  }))
+  return http.get<{ data: IUserInfoRes }>('/auth/me').then(res => normalizeUserInfo(res.data))
 }
 
 /**
@@ -56,10 +61,15 @@ export function logout() {
  * 修改用户信息
  */
 export function updateInfo(data: IUpdateInfo) {
-  return http.patch<{ data: IUserInfoRes }>('/auth/me/profile', {
+  return updateSelfProfile({
     nickname: data.name,
+    phoneNumber: null,
     avatarUrl: null,
   })
+}
+
+export function updateSelfProfile(data: { nickname: string | null, phoneNumber: string | null, avatarUrl: string | null }) {
+  return http.patch<{ data: IUserInfoRes }>('/auth/me/profile', data).then(res => normalizeUserInfo(res.data))
 }
 
 /**

@@ -27,6 +27,7 @@ export type IAuthLoginRes = ISingleTokenRes | IDoubleTokenRes
 export type UserRole = string
 
 export interface IUserInfoRes {
+  id?: number | string
   userId: number | string
   sub?: string
   username: string
